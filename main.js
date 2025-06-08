@@ -1,4 +1,4 @@
-const CLIENT_ID = "106106688860-mj678v74sdgoob22uac35i3tb611co4h.apps.googleusercontent.com ";
+const CLIENT_ID = "106106688860-mj678v74sdgoob22uac35i3tb611co4h.apps.googleusercontent.com";
 const REDIRECT_URI = "https://snotrman.github.io/tax-calc/oauth-callback";
 const SCOPE = "https://www.googleapis.com/auth/spreadsheets.readonly";
 const DISCOVERY_DOCS = ["https://sheets.googleapis.com/$discovery/rest?version=v4"];
