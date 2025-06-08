@@ -8,6 +8,7 @@ function initOAuth() {
     tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: CLIENT_ID,
         scope: SCOPE,
+        prompt: "", // Prevents unnecessary popups
         callback: (response) => {
             if (response.access_token) {
                 localStorage.setItem("googleAccessToken", response.access_token);
@@ -17,6 +18,20 @@ function initOAuth() {
             }
         }
     });
+
+    checkExistingToken(); // Automatically refresh token if it's expired
+}
+
+// Check if a valid token exists and refresh if needed
+function checkExistingToken() {
+    const storedToken = localStorage.getItem("googleAccessToken");
+
+    if (storedToken) {
+        console.log("Existing access token found:", storedToken);
+        tokenClient.requestAccessToken(); // Refresh the token without user interaction
+    } else {
+        console.log("No valid token found. User needs to authenticate.");
+    }
 }
 
 // Authenticate User
@@ -28,7 +43,7 @@ document.getElementById("authButton").addEventListener("click", () => {
 document.getElementById("fetchDataButton").addEventListener("click", async () => {
     const sheetId = document.getElementById("sheetId").value;
     const range = document.getElementById("range").value;
-    const accessToken = localStorage.getItem("googleAccessToken");
+    let accessToken = localStorage.getItem("googleAccessToken");
 
     if (!sheetId || !range) {
         alert("Please enter Spreadsheet ID and Range!");
@@ -41,7 +56,7 @@ document.getElementById("fetchDataButton").addEventListener("click", async () =>
     }
 
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}`;
-    
+
     try {
         const response = await fetch(url, {
             headers: {
