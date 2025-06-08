@@ -2,48 +2,51 @@ const CLIENT_ID = "106106688860-mj678v74sdgoob22uac35i3tb611co4h.apps.googleuser
 const SCOPE = "https://www.googleapis.com/auth/spreadsheets.readonly";
 
 let tokenClient;
+let accessToken = localStorage.getItem("googleAccessToken");
 
 // Initialize Google Identity Services OAuth
 function initOAuth() {
     tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: CLIENT_ID,
         scope: SCOPE,
-        prompt: "", // Prevents unnecessary popups
         callback: (response) => {
             if (response.access_token) {
                 localStorage.setItem("googleAccessToken", response.access_token);
-                console.log("Access Token:", response.access_token);
+                accessToken = response.access_token;
+                console.log("Access Token:", accessToken);
             } else {
                 console.error("Failed to get access token:", response);
             }
         }
     });
 
-    checkExistingToken(); // Automatically refresh token if it's expired
+    checkExistingToken(); // Automatically refresh the token if it's expired
 }
 
-// Check if a valid token exists and refresh if needed
+// Check if an existing token is available
 function checkExistingToken() {
-    const storedToken = localStorage.getItem("googleAccessToken");
-
-    if (storedToken) {
-        console.log("Existing access token found:", storedToken);
-        tokenClient.requestAccessToken(); // Refresh the token without user interaction
+    if (accessToken) {
+        console.log("Using stored access token:", accessToken);
     } else {
-        console.log("No valid token found. User needs to authenticate.");
+        console.log("No valid token found. Requesting a new one...");
+        requestNewToken();
     }
+}
+
+// Request a new OAuth token
+function requestNewToken() {
+    tokenClient.requestAccessToken();
 }
 
 // Authenticate User
 document.getElementById("authButton").addEventListener("click", () => {
-    tokenClient.requestAccessToken();
+    requestNewToken();
 });
 
 // Fetch data from Google Sheets
 document.getElementById("fetchDataButton").addEventListener("click", async () => {
     const sheetId = document.getElementById("sheetId").value;
     const range = document.getElementById("range").value;
-    let accessToken = localStorage.getItem("googleAccessToken");
 
     if (!sheetId || !range) {
         alert("Please enter Spreadsheet ID and Range!");
@@ -52,6 +55,7 @@ document.getElementById("fetchDataButton").addEventListener("click", async () =>
 
     if (!accessToken) {
         alert("Please authenticate first!");
+        requestNewToken();
         return;
     }
 
