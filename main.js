@@ -1,33 +1,34 @@
 const CLIENT_ID = "106106688860-mj678v74sdgoob22uac35i3tb611co4h.apps.googleusercontent.com";
-const REDIRECT_URI = "https://snotrman.github.io/tax-calc/oauth-callback";
 const SCOPE = "https://www.googleapis.com/auth/spreadsheets.readonly";
 
-// Initialize Google Identity Services
-function handleCredentialResponse(response) {
-    console.log("Google ID Token:", response.credential);
-    localStorage.setItem("googleToken", response.credential);
+let tokenClient;
+
+// Initialize Google Identity Services OAuth
+function initOAuth() {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: SCOPE,
+        callback: (response) => {
+            if (response.access_token) {
+                localStorage.setItem("googleAccessToken", response.access_token);
+                console.log("Access Token:", response.access_token);
+            } else {
+                console.error("Failed to get access token:", response);
+            }
+        }
+    });
 }
 
-// Load Google Identity Services on window load
-window.onload = function () {
-    google.accounts.id.initialize({
-        client_id: CLIENT_ID,
-        callback: handleCredentialResponse
-    });
-
-    google.accounts.id.renderButton(
-        document.getElementById("authButton"),
-        { theme: "outline", size: "large" }
-    );
-
-    google.accounts.id.prompt();
-};
+// Authenticate User
+document.getElementById("authButton").addEventListener("click", () => {
+    tokenClient.requestAccessToken();
+});
 
 // Fetch data from Google Sheets
 document.getElementById("fetchDataButton").addEventListener("click", async () => {
     const sheetId = document.getElementById("sheetId").value;
     const range = document.getElementById("range").value;
-    const accessToken = localStorage.getItem("googleToken");
+    const accessToken = localStorage.getItem("googleAccessToken");
 
     if (!sheetId || !range) {
         alert("Please enter Spreadsheet ID and Range!");
@@ -41,18 +42,23 @@ document.getElementById("fetchDataButton").addEventListener("click", async () =>
 
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}`;
     
-    const response = await fetch(url, {
-        headers: {
-            Authorization: `Bearer ${accessToken}`
+    try {
+        const response = await fetch(url, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.values) {
+            document.getElementById("sheetContents").innerHTML = formatSheetData(data.values);
+        } else {
+            document.getElementById("sheetContents").innerHTML = "Error retrieving data.";
         }
-    });
-
-    const data = await response.json();
-
-    if (data.values) {
-        document.getElementById("sheetContents").innerHTML = formatSheetData(data.values);
-    } else {
-        document.getElementById("sheetContents").innerHTML = "Error retrieving data.";
+    } catch (error) {
+        console.error("Fetch error:", error);
+        alert("Failed to fetch data from Google Sheets.");
     }
 });
 
@@ -69,3 +75,6 @@ function formatSheetData(values) {
     table += "</table>";
     return table;
 }
+
+// Initialize OAuth when the page loads
+window.onload = initOAuth;
