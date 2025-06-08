@@ -3,14 +3,6 @@ const REDIRECT_URI = "https://snotrman.github.io/tax-calc/oauth-callback";
 const SCOPE = "https://www.googleapis.com/auth/spreadsheets.readonly";
 const DISCOVERY_DOCS = ["https://sheets.googleapis.com/$discovery/rest?version=v4"];
 
-function handleClientLoad() {
-    gapi.load("client:auth2", () => {
-        gapi.client.init({
-            clientId: CLIENT_ID,
-            scope: SCOPE
-        });
-    });
-}
 
 document.getElementById("authButton").addEventListener("click", () => {
     gapi.auth2.getAuthInstance().signIn().then(() => {
@@ -57,5 +49,18 @@ function formatSheetData(values) {
     table += "</table>";
     return table;
 }
+
+function handleClientLoad() {
+    gapi.load("client:auth2", () => {
+        gapi.client.init({
+            clientId: "YOUR_CLIENT_ID_HERE",
+            scope: "https://www.googleapis.com/auth/spreadsheets.readonly"
+        }).then(() => {
+            console.log("Google API initialized!");
+        });
+    });
+}
+
+
 
 window.onload = handleClientLoad;
