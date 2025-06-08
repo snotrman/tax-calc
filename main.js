@@ -52,14 +52,16 @@ function formatSheetData(values) {
 
 function handleClientLoad() {
     gapi.load("client:auth2", () => {
-        gapi.client.init({
-            clientId: "YOUR_CLIENT_ID_HERE",
-            scope: "https://www.googleapis.com/auth/spreadsheets.readonly"
+        gapi.auth2.init({
+            client_id: CLIENT_ID
         }).then(() => {
             console.log("Google API initialized!");
+        }).catch(error => {
+            console.error("Error initializing Google API:", error);
         });
     });
 }
+
 
 
 
