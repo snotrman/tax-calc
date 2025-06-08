@@ -1,12 +1,3 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 import Dexie from "dexie";
 import { html, render } from "lit";
 const CLIENT_ID = "106106688860-mj678v74sdgoob22uac35i3tb611co4h.apps.googleusercontent.com";
@@ -42,34 +33,32 @@ function initOAuth() {
 function authenticateUser() {
     tokenClient.requestAccessToken();
 }
-function fetchData(sheetId, range) {
-    return __awaiter(this, void 0, void 0, function* () {
-        if (!accessToken) {
-            alert("Please authenticate first!");
-            return;
-        }
-        const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}`;
-        try {
-            const response = yield fetch(url, {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`
-                }
-            });
-            const data = yield response.json();
-            if (data.values) {
-                console.log("Fetched Data:", data);
-                yield db.sheets.put({ id: sheetId, data });
-                renderSheetData(data.values);
+async function fetchData(sheetId, range) {
+    if (!accessToken) {
+        alert("Please authenticate first!");
+        return;
+    }
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}`;
+    try {
+        const response = await fetch(url, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`
             }
-            else {
-                document.getElementById("sheetContents").innerHTML = "Error retrieving data.";
-            }
+        });
+        const data = await response.json();
+        if (data.values) {
+            console.log("Fetched Data:", data);
+            await db.sheets.put({ id: sheetId, data });
+            renderSheetData(data.values);
         }
-        catch (error) {
-            console.error("Fetch error:", error);
-            alert("Failed to fetch data from Google Sheets.");
+        else {
+            document.getElementById("sheetContents").innerHTML = "Error retrieving data.";
         }
-    });
+    }
+    catch (error) {
+        console.error("Fetch error:", error);
+        alert("Failed to fetch data from Google Sheets.");
+    }
 }
 function renderSheetData(values) {
     let table = "<table border='1'>";
