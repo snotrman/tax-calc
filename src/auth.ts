@@ -10,6 +10,11 @@ const SCOPE = "https://www.googleapis.com/auth/spreadsheets.readonly";
 let accessToken: string | null = localStorage.getItem("googleAccessToken");
 let tokenClient: any;
 
+// Function to Check If User Is Authenticated
+export function isAuthenticated(): boolean {
+    return accessToken !== null; // Checks if there's a stored token
+}
+
 // Initialize OAuth
 export function initOAuth() {
     tokenClient = window.google.accounts.oauth2.initTokenClient({
@@ -34,7 +39,7 @@ export function authenticateUser() {
 
 // Fetch Data from Google Sheets
 export async function fetchData(sheetId: string, range: string) {
-    if (!accessToken) {
+    if (!isAuthenticated()) {
         alert("Please authenticate first!");
         return;
     }

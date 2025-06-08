@@ -1,8 +1,8 @@
-import { fetchData, authenticateUser } from "./auth";
+import { fetchData, authenticateUser, isAuthenticated } from "./auth";
 import Dexie from "dexie";
 import { html, render } from "lit";
 
-let sheetId="1h-XeGyXoW31zYYrA8sr7ZaLSgdeZ7V7wNjpQJ7WoifY"
+const sheetId = "1h-XeGyXoW31zYYrA8sr7ZaLSgdeZ7V7wNjpQJ7WoifY"; // Hardcoded Sheet ID
 
 // IndexedDB Setup
 class AppDB extends Dexie {
@@ -33,10 +33,9 @@ function renderSheetData(values: any[][]) {
     document.getElementById("sheetContents")!.innerHTML = table;
 }
 
-// Fetch & Load Full Table
-async function loadSheet(sheetId: string) {
-    const range = "A1:Z1000";
-    const sheetData = await fetchData(sheetId, range);
+// Fetch & Load Full Table Automatically
+async function loadSheet() {
+    const sheetData = await fetchData(sheetId, "A1:Z1000"); // Fetch full sheet range
     
     if (sheetData) {
         lastRow = sheetData[sheetData.length - 1] || [];
@@ -46,7 +45,7 @@ async function loadSheet(sheetId: string) {
 }
 
 // Append Data to Sheets & Refresh View
-async function appendDataToSheet(sheetId: string) {
+async function appendDataToSheet() {
     const numValue = (document.getElementById("inputNumber") as HTMLInputElement).value;
     const strValue = (document.getElementById("inputString") as HTMLInputElement).value;
 
@@ -71,7 +70,7 @@ async function appendDataToSheet(sheetId: string) {
         if (!response.ok) throw new Error("Failed to append data.");
         
         console.log("Data added successfully.");
-        await loadSheet(sheetId);
+        await loadSheet();
     } catch (error) {
         console.error("Error appending data:", error);
         alert("Failed to append data.");
@@ -82,15 +81,23 @@ async function appendDataToSheet(sheetId: string) {
 export function renderUI() {
     const template = html`
         <h2>Google Sheets Viewer</h2>
-        <button @click="${authenticateUser}">Authenticate with Google</button>
-
+        ${!isAuthenticated() ? html`<button @click="${authenticateUser}">Authenticate with Google</button>` : ""}
+        
         <h3>Append Data</h3>
         <input type="number" id="inputNumber" placeholder="Enter number">
         <input type="text" id="inputString" placeholder="Enter string">
-        <button @click="${() => appendDataToSheet((document.getElementById("sheetId") as HTMLInputElement).value)}">Submit</button>
+        <button @click="${appendDataToSheet}">Submit</button>
 
         <h3>Sheet Contents:</h3>
         <div id="sheetContents"></div>
     `;
     render(template, document.body);
 }
+
+// Initialize App Automatically
+window.onload = () => {
+    if (isAuthenticated()) {
+        loadSheet();
+    }
+    renderUI();
+};

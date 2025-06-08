@@ -5969,6 +5969,9 @@
   var SCOPE = "https://www.googleapis.com/auth/spreadsheets.readonly";
   var accessToken = localStorage.getItem("googleAccessToken");
   var tokenClient;
+  function isAuthenticated() {
+    return accessToken !== null;
+  }
   function initOAuth() {
     tokenClient = window.google.accounts.oauth2.initTokenClient({
       client_id: CLIENT_ID,
@@ -5987,12 +5990,12 @@
   function authenticateUser() {
     tokenClient.requestAccessToken();
   }
-  async function fetchData(sheetId, range) {
-    if (!accessToken) {
+  async function fetchData(sheetId2, range) {
+    if (!isAuthenticated()) {
       alert("Please authenticate first!");
       return;
     }
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}`;
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId2}/values/${range}`;
     try {
       const response = await fetch(url, {
         headers: { Authorization: `Bearer ${accessToken}` }
@@ -6571,6 +6574,7 @@
   (s3.litElementVersions ??= []).push("4.2.0");
 
   // src/sheets.ts
+  var sheetId = "1h-XeGyXoW31zYYrA8sr7ZaLSgdeZ7V7wNjpQJ7WoifY";
   var AppDB = class extends import_wrapper_default {
     constructor() {
       super("AppDatabase");
@@ -6592,16 +6596,15 @@
     table += "</table>";
     document.getElementById("sheetContents").innerHTML = table;
   }
-  async function loadSheet(sheetId) {
-    const range = "A1:Z1000";
-    const sheetData = await fetchData(sheetId, range);
+  async function loadSheet() {
+    const sheetData = await fetchData(sheetId, "A1:Z1000");
     if (sheetData) {
       lastRow = sheetData[sheetData.length - 1] || [];
       console.log("Determined Last Row:", lastRow);
       renderSheetData(sheetData);
     }
   }
-  async function appendDataToSheet(sheetId) {
+  async function appendDataToSheet() {
     const numValue = document.getElementById("inputNumber").value;
     const strValue = document.getElementById("inputString").value;
     if (!numValue || !strValue) {
@@ -6621,7 +6624,7 @@
       });
       if (!response.ok) throw new Error("Failed to append data.");
       console.log("Data added successfully.");
-      await loadSheet(sheetId);
+      await loadSheet();
     } catch (error) {
       console.error("Error appending data:", error);
       alert("Failed to append data.");
@@ -6630,18 +6633,24 @@
   function renderUI() {
     const template = x`
         <h2>Google Sheets Viewer</h2>
-        <button @click="${authenticateUser}">Authenticate with Google</button>
-
+        ${!isAuthenticated() ? x`<button @click="${authenticateUser}">Authenticate with Google</button>` : ""}
+        
         <h3>Append Data</h3>
         <input type="number" id="inputNumber" placeholder="Enter number">
         <input type="text" id="inputString" placeholder="Enter string">
-        <button @click="${() => appendDataToSheet(document.getElementById("sheetId").value)}">Submit</button>
+        <button @click="${appendDataToSheet}">Submit</button>
 
         <h3>Sheet Contents:</h3>
         <div id="sheetContents"></div>
     `;
     B(template, document.body);
   }
+  window.onload = () => {
+    if (isAuthenticated()) {
+      loadSheet();
+    }
+    renderUI();
+  };
 
   // src/main.ts
   window.onload = () => {
