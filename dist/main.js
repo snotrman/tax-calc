@@ -90,52 +90,10 @@ function renderUI() {
         <input type="text" id="sheetId" placeholder="Spreadsheet ID">
         <input type="text" id="range" placeholder="Cell Range (e.g., Sheet1!A1:C10)">
         <button @click="${() => fetchData(document.getElementById("sheetId").value, document.getElementById("range").value)}">Fetch Data</button>
-
-        <h3>Append Data to Google Sheets</h3>
-        <input type="number" id="inputNumber" placeholder="Enter number">
-        <input type="text" id="inputString" placeholder="Enter string">
-        <button @click="${() => appendDataToSheet(document.getElementById("sheetId").value)}">Submit</button>
-
         <h3>Sheet Contents:</h3>
         <div id="sheetContents"></div>
     `;
     render(template, document.body);
-}
-function appendDataToSheet(sheetId) {
-    return __awaiter(this, void 0, void 0, function* () {
-        if (!accessToken) {
-            alert("Please authenticate first!");
-            return;
-        }
-        const numValue = document.getElementById("inputNumber").value;
-        const strValue = document.getElementById("inputString").value;
-        if (!numValue || !strValue) {
-            alert("Both fields must be filled!");
-            return;
-        }
-        const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Sheet1:append?valueInputOption=RAW`;
-        const data = {
-            values: [[numValue, strValue]]
-        };
-        try {
-            const response = yield fetch(url, {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(data)
-            });
-            const result = yield response.json();
-            console.log("Data added:", result);
-            const range = "Sheet1!A1:Z100";
-            yield fetchData(sheetId, range);
-        }
-        catch (error) {
-            console.error("Error appending data:", error);
-            alert("Failed to append data.");
-        }
-    });
 }
 window.onload = () => {
     initOAuth();

@@ -1,11 +1,11 @@
+import Dexie from "dexie";
+import { html, render } from "lit";
 declare global {
     interface Window {
         google: any;
     }
 }
 
-import Dexie from "dexie";
-import { html, render } from "lit";
 
 // Google Authentication Constants
 const CLIENT_ID = "106106688860-mj678v74sdgoob22uac35i3tb611co4h.apps.googleusercontent.com";
