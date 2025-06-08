@@ -7,8 +7,14 @@ const DISCOVERY_DOCS = ["https://sheets.googleapis.com/$discovery/rest?version=v
 document.getElementById("authButton").addEventListener("click", () => {
     gapi.auth2.getAuthInstance().signIn().then(() => {
         console.log("User signed in!");
+    }).catch(error => {
+        console.error("Authentication failed:", error);
+        if (error.error === "popup_closed_by_user") {
+            alert("Authentication popup was closed before signing in. Please try again.");
+        }
     });
 });
+
 
 document.getElementById("fetchDataButton").addEventListener("click", async () => {
     const sheetId = document.getElementById("sheetId").value;
