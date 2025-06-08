@@ -6631,8 +6631,6 @@
     const template = x`
         <h2>Google Sheets Viewer</h2>
         <button @click="${authenticateUser}">Authenticate with Google</button>
-        <input type="text" id="sheetId" placeholder="Spreadsheet ID">
-        <button @click="${() => loadSheet(document.getElementById("sheetId").value)}">Load Table</button>
 
         <h3>Append Data</h3>
         <input type="number" id="inputNumber" placeholder="Enter number">

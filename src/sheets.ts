@@ -2,6 +2,8 @@ import { fetchData, authenticateUser } from "./auth";
 import Dexie from "dexie";
 import { html, render } from "lit";
 
+let sheetId="1h-XeGyXoW31zYYrA8sr7ZaLSgdeZ7V7wNjpQJ7WoifY"
+
 // IndexedDB Setup
 class AppDB extends Dexie {
     sheets!: Dexie.Table<{ id: string; data: any }, string>;
@@ -81,8 +83,6 @@ export function renderUI() {
     const template = html`
         <h2>Google Sheets Viewer</h2>
         <button @click="${authenticateUser}">Authenticate with Google</button>
-        <input type="text" id="sheetId" placeholder="Spreadsheet ID">
-        <button @click="${() => loadSheet((document.getElementById("sheetId") as HTMLInputElement).value)}">Load Table</button>
 
         <h3>Append Data</h3>
         <input type="number" id="inputNumber" placeholder="Enter number">
