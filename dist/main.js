@@ -6579,6 +6579,7 @@
     }
   };
   var db = new AppDB();
+  var lastRow = [];
   function renderSheetData(values) {
     let table = "<table border='1'>";
     values.forEach((row) => {
@@ -6590,6 +6591,15 @@
     });
     table += "</table>";
     document.getElementById("sheetContents").innerHTML = table;
+  }
+  async function loadSheet(sheetId) {
+    const range = "A1:Z1000";
+    const sheetData = await fetchData(sheetId, range);
+    if (sheetData) {
+      lastRow = sheetData[sheetData.length - 1] || [];
+      console.log("Determined Last Row:", lastRow);
+      renderSheetData(sheetData);
+    }
   }
   async function appendDataToSheet(sheetId) {
     const numValue = document.getElementById("inputNumber").value;
@@ -6611,8 +6621,7 @@
       });
       if (!response.ok) throw new Error("Failed to append data.");
       console.log("Data added successfully.");
-      const updatedData = await fetchData(sheetId, "Sheet1!A1:Z100");
-      renderSheetData(updatedData);
+      await loadSheet(sheetId);
     } catch (error) {
       console.error("Error appending data:", error);
       alert("Failed to append data.");
@@ -6623,11 +6632,7 @@
         <h2>Google Sheets Viewer</h2>
         <button @click="${authenticateUser}">Authenticate with Google</button>
         <input type="text" id="sheetId" placeholder="Spreadsheet ID">
-        <input type="text" id="range" placeholder="Cell Range (e.g., Sheet1!A1:C10)">
-        <button @click="${() => fetchData(
-      document.getElementById("sheetId").value,
-      document.getElementById("range").value
-    )}">Fetch Data</button>
+        <button @click="${() => loadSheet(document.getElementById("sheetId").value)}">Load Table</button>
 
         <h3>Append Data</h3>
         <input type="number" id="inputNumber" placeholder="Enter number">

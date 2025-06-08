@@ -14,6 +14,7 @@ class AppDB extends Dexie {
 }
 
 const db = new AppDB();
+let lastRow: any[] = []; // Stores the last row of the sheet
 
 // Render Sheet Data
 function renderSheetData(values: any[][]) {
@@ -26,10 +27,23 @@ function renderSheetData(values: any[][]) {
         table += "</tr>";
     });
     table += "</table>";
+
     document.getElementById("sheetContents")!.innerHTML = table;
 }
 
-// Handle User Input & Append Data to Sheets
+// Fetch & Load Full Table
+async function loadSheet(sheetId: string) {
+    const range = "A1:Z1000";
+    const sheetData = await fetchData(sheetId, range);
+    
+    if (sheetData) {
+        lastRow = sheetData[sheetData.length - 1] || [];
+        console.log("Determined Last Row:", lastRow);
+        renderSheetData(sheetData);
+    }
+}
+
+// Append Data to Sheets & Refresh View
 async function appendDataToSheet(sheetId: string) {
     const numValue = (document.getElementById("inputNumber") as HTMLInputElement).value;
     const strValue = (document.getElementById("inputString") as HTMLInputElement).value;
@@ -55,8 +69,7 @@ async function appendDataToSheet(sheetId: string) {
         if (!response.ok) throw new Error("Failed to append data.");
         
         console.log("Data added successfully.");
-        const updatedData = await fetchData(sheetId, "Sheet1!A1:Z100");
-        renderSheetData(updatedData);
+        await loadSheet(sheetId);
     } catch (error) {
         console.error("Error appending data:", error);
         alert("Failed to append data.");
@@ -69,9 +82,7 @@ export function renderUI() {
         <h2>Google Sheets Viewer</h2>
         <button @click="${authenticateUser}">Authenticate with Google</button>
         <input type="text" id="sheetId" placeholder="Spreadsheet ID">
-        <input type="text" id="range" placeholder="Cell Range (e.g., Sheet1!A1:C10)">
-        <button @click="${() => fetchData((document.getElementById("sheetId") as HTMLInputElement).value, 
-                        (document.getElementById("range") as HTMLInputElement).value)}">Fetch Data</button>
+        <button @click="${() => loadSheet((document.getElementById("sheetId") as HTMLInputElement).value)}">Load Table</button>
 
         <h3>Append Data</h3>
         <input type="number" id="inputNumber" placeholder="Enter number">
