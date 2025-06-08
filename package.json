@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "main.js",
   "scripts": {
+    "build": "npx esbuild src/main.ts --bundle --outfile=dist/main.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

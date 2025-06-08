@@ -5964,6 +5964,52 @@
     }
   });
 
+  // src/auth.ts
+  var CLIENT_ID = "106106688860-mj678v74sdgoob22uac35i3tb611co4h.apps.googleusercontent.com";
+  var SCOPE = "https://www.googleapis.com/auth/spreadsheets.readonly";
+  var accessToken = localStorage.getItem("googleAccessToken");
+  var tokenClient;
+  function initOAuth() {
+    tokenClient = window.google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: SCOPE,
+      callback: (response) => {
+        if (response.access_token) {
+          accessToken = response.access_token;
+          localStorage.setItem("googleAccessToken", accessToken);
+          console.log("Authenticated! Access Token:", accessToken);
+        } else {
+          console.error("Failed to get access token:", response);
+        }
+      }
+    });
+  }
+  function authenticateUser() {
+    tokenClient.requestAccessToken();
+  }
+  async function fetchData(sheetId, range) {
+    if (!accessToken) {
+      alert("Please authenticate first!");
+      return;
+    }
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}`;
+    try {
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      const data = await response.json();
+      if (data.values) {
+        console.log("Fetched Data:", data);
+        return data.values;
+      } else {
+        throw new Error("Error retrieving data.");
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+      alert("Failed to fetch data from Google Sheets.");
+    }
+  }
+
   // node_modules/dexie/import-wrapper.mjs
   var import_dexie = __toESM(require_dexie(), 1);
   var DexieSymbol = Symbol.for("Dexie");
@@ -6524,64 +6570,15 @@
   o4?.({ LitElement: i4 });
   (s3.litElementVersions ??= []).push("4.2.0");
 
-  // src/main.ts
-  var CLIENT_ID = "106106688860-mj678v74sdgoob22uac35i3tb611co4h.apps.googleusercontent.com";
-  var SCOPE = "https://www.googleapis.com/auth/spreadsheets.readonly";
-  var accessToken = localStorage.getItem("googleAccessToken");
+  // src/sheets.ts
   var AppDB = class extends import_wrapper_default {
     constructor() {
       super("AppDatabase");
-      this.version(1).stores({
-        sheets: "id"
-      });
+      this.version(1).stores({ sheets: "id" });
       this.sheets = this.table("sheets");
     }
   };
   var db = new AppDB();
-  var tokenClient;
-  function initOAuth() {
-    tokenClient = window.google.accounts.oauth2.initTokenClient({
-      client_id: CLIENT_ID,
-      scope: SCOPE,
-      callback: (response) => {
-        if (response.access_token) {
-          accessToken = response.access_token;
-          localStorage.setItem("googleAccessToken", accessToken);
-          console.log("Authenticated! Access Token:", accessToken);
-        } else {
-          console.error("Failed to get access token:", response);
-        }
-      }
-    });
-  }
-  function authenticateUser() {
-    tokenClient.requestAccessToken();
-  }
-  async function fetchData(sheetId, range) {
-    if (!accessToken) {
-      alert("Please authenticate first!");
-      return;
-    }
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}`;
-    try {
-      const response = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
-      });
-      const data = await response.json();
-      if (data.values) {
-        console.log("Fetched Data:", data);
-        await db.sheets.put({ id: sheetId, data });
-        renderSheetData(data.values);
-      } else {
-        document.getElementById("sheetContents").innerHTML = "Error retrieving data.";
-      }
-    } catch (error) {
-      console.error("Fetch error:", error);
-      alert("Failed to fetch data from Google Sheets.");
-    }
-  }
   function renderSheetData(values) {
     let table = "<table border='1'>";
     values.forEach((row) => {
@@ -6594,6 +6591,33 @@
     table += "</table>";
     document.getElementById("sheetContents").innerHTML = table;
   }
+  async function appendDataToSheet(sheetId) {
+    const numValue = document.getElementById("inputNumber").value;
+    const strValue = document.getElementById("inputString").value;
+    if (!numValue || !strValue) {
+      alert("Both fields must be filled!");
+      return;
+    }
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Sheet1:append?valueInputOption=RAW`;
+    const data = { values: [[numValue, strValue]] };
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("googleAccessToken")}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+      });
+      if (!response.ok) throw new Error("Failed to append data.");
+      console.log("Data added successfully.");
+      const updatedData = await fetchData(sheetId, "Sheet1!A1:Z100");
+      renderSheetData(updatedData);
+    } catch (error) {
+      console.error("Error appending data:", error);
+      alert("Failed to append data.");
+    }
+  }
   function renderUI() {
     const template = x`
         <h2>Google Sheets Viewer</h2>
@@ -6604,11 +6628,19 @@
       document.getElementById("sheetId").value,
       document.getElementById("range").value
     )}">Fetch Data</button>
+
+        <h3>Append Data</h3>
+        <input type="number" id="inputNumber" placeholder="Enter number">
+        <input type="text" id="inputString" placeholder="Enter string">
+        <button @click="${() => appendDataToSheet(document.getElementById("sheetId").value)}">Submit</button>
+
         <h3>Sheet Contents:</h3>
         <div id="sheetContents"></div>
     `;
     B(template, document.body);
   }
+
+  // src/main.ts
   window.onload = () => {
     initOAuth();
     renderUI();
