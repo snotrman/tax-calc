@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES6", 
+    "module": "ESNext", 
+    "moduleResolution": "Node",
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "./dist", // Output all compiled files here
+    "removeComments": true,
+    "sourceMap": false,
+    "lib": ["DOM", "ES6"],
+    "downlevelIteration": true,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["src/**/*.ts"], 
+  "exclude": ["node_modules", "dist"]
+}
