@@ -1,33 +1,46 @@
 const CLIENT_ID = "106106688860-mj678v74sdgoob22uac35i3tb611co4h.apps.googleusercontent.com";
 const REDIRECT_URI = "https://snotrman.github.io/tax-calc/oauth-callback";
 const SCOPE = "https://www.googleapis.com/auth/spreadsheets.readonly";
-const DISCOVERY_DOCS = ["https://sheets.googleapis.com/$discovery/rest?version=v4"];
 
+// Initialize Google Identity Services
+function handleCredentialResponse(response) {
+    console.log("Google ID Token:", response.credential);
+    localStorage.setItem("googleToken", response.credential);
+}
 
-document.getElementById("authButton").addEventListener("click", () => {
-    gapi.auth2.getAuthInstance().signIn().then(() => {
-        console.log("User signed in!");
-    }).catch(error => {
-        console.error("Authentication failed:", error);
-        if (error.error === "popup_closed_by_user") {
-            alert("Authentication popup was closed before signing in. Please try again.");
-        }
+// Load Google Identity Services on window load
+window.onload = function () {
+    google.accounts.id.initialize({
+        client_id: CLIENT_ID,
+        callback: handleCredentialResponse
     });
-});
 
+    google.accounts.id.renderButton(
+        document.getElementById("authButton"),
+        { theme: "outline", size: "large" }
+    );
 
+    google.accounts.id.prompt();
+};
+
+// Fetch data from Google Sheets
 document.getElementById("fetchDataButton").addEventListener("click", async () => {
     const sheetId = document.getElementById("sheetId").value;
     const range = document.getElementById("range").value;
+    const accessToken = localStorage.getItem("googleToken");
 
     if (!sheetId || !range) {
         alert("Please enter Spreadsheet ID and Range!");
         return;
     }
 
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}`;
-    const accessToken = gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().access_token;
+    if (!accessToken) {
+        alert("Please authenticate first!");
+        return;
+    }
 
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}`;
+    
     const response = await fetch(url, {
         headers: {
             Authorization: `Bearer ${accessToken}`
@@ -43,6 +56,7 @@ document.getElementById("fetchDataButton").addEventListener("click", async () =>
     }
 });
 
+// Format the sheet data into a table
 function formatSheetData(values) {
     let table = "<table border='1'>";
     values.forEach(row => {
@@ -55,20 +69,3 @@ function formatSheetData(values) {
     table += "</table>";
     return table;
 }
-
-function handleClientLoad() {
-    gapi.load("client:auth2", () => {
-        gapi.auth2.init({
-            client_id: CLIENT_ID
-        }).then(() => {
-            console.log("Google API initialized!");
-        }).catch(error => {
-            console.error("Error initializing Google API:", error);
-        });
-    });
-}
-
-
-
-
-window.onload = handleClientLoad;
