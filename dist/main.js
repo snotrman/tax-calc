@@ -1,6 +1,3 @@
-import Dexie from "dexie";
-import { html, render } from "lit";
-
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -10,7 +7,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-
+import Dexie from "dexie";
+import { html, render } from "lit";
 const CLIENT_ID = "106106688860-mj678v74sdgoob22uac35i3tb611co4h.apps.googleusercontent.com";
 const SCOPE = "https://www.googleapis.com/auth/spreadsheets.readonly";
 let accessToken = localStorage.getItem("googleAccessToken");
